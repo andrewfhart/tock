@@ -27,7 +27,8 @@
     "react-dom": "^18.2.0",
     "react-swipeable": "^7.0.2",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.0.4"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.15.2",

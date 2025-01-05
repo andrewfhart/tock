@@ -1,32 +1,33 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
-import { Slider } from '~/components/ui/slider'
-import { Activity, GoalType } from '~/types/activity'
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
+import { Slider } from "~/components/ui/slider";
+import { Activity, GoalType } from "~/types/activity";
+import { v4 as uuidv4 } from "uuid";
 
 interface CreateActivityProps {
-  onSave: (activity: Activity) => void
-  onCancel: () => void
+  onSave: (activity: Activity) => void;
+  onCancel: () => void;
 }
 
 export function CreateActivity({ onSave, onCancel }: CreateActivityProps) {
-  const [label, setLabel] = useState('')
-  const [timeGoal, setTimeGoal] = useState<number | undefined>(undefined)
-  const [goalType, setGoalType] = useState<GoalType>('neutral')
+  const [label, setLabel] = useState("");
+  const [timeGoal, setTimeGoal] = useState<number | undefined>(undefined);
+  const [goalType, setGoalType] = useState<GoalType>("neutral");
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     onSave({
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       label,
       timeGoal: timeGoal ? timeGoal * 60 : undefined, // Convert hours to minutes
-      goalType: timeGoal ? goalType : undefined
-    })
-  }
+      goalType: timeGoal ? goalType : undefined,
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-4">
@@ -50,14 +51,17 @@ export function CreateActivity({ onSave, onCancel }: CreateActivityProps) {
           onValueChange={(value) => setTimeGoal(value[0] || undefined)}
         />
         <div className="text-sm text-muted-foreground">
-          {timeGoal ? `${timeGoal} hours per day` : 'No time goal set'}
+          {timeGoal ? `${timeGoal} hours per day` : "No time goal set"}
         </div>
       </div>
 
       {timeGoal && (
         <div className="space-y-2">
           <Label>Goal Type</Label>
-          <RadioGroup value={goalType} onValueChange={(value: GoalType) => setGoalType(value)}>
+          <RadioGroup
+            value={goalType}
+            onValueChange={(value: GoalType) => setGoalType(value)}
+          >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="more" id="more" />
               <Label htmlFor="more">More is better</Label>
@@ -83,6 +87,5 @@ export function CreateActivity({ onSave, onCancel }: CreateActivityProps) {
         </Button>
       </div>
     </form>
-  )
+  );
 }
-
