@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Plus, Bug } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { ActivityButton } from "~/components/activity-button";
-import { CreateActivity } from "~/components/create-activity";
+import { CreateActivityForm } from "~/components/create-activity";
 import { HistoryView } from "~/components/history-view";
 import { DebugView } from "~/components/debug-view";
 import { Activity } from "~/types/activity";
@@ -15,8 +15,10 @@ import {
   formatTime,
   getDateKey,
 } from "~/utils/storage";
+import { calculateDurations } from "~/utils/duration";
 
 import { useSwipeable } from "react-swipeable";
+import { useNavigate } from "@remix-run/react";
 
 export const meta: MetaFunction = () => {
   return [
@@ -31,6 +33,7 @@ const DEFAULT_ACTIVITY: Activity = {
 };
 
 export default function TimeTracker() {
+  const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([DEFAULT_ACTIVITY]);
   const [activeActivityId, setActiveActivityId] = useState<string>(
     DEFAULT_ACTIVITY.id
@@ -42,6 +45,7 @@ export default function TimeTracker() {
   const [activityDurations, setActivityDurations] = useState<
     Record<string, number>
   >({});
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load activities from storage
   useEffect(() => {
@@ -56,39 +60,16 @@ export default function TimeTracker() {
       const dateKey = getDateKey(currentDate);
       const dayActivities = times[dateKey] || [];
 
-      const durations: Record<string, number> = {};
-
-      // Calculate durations for known activities
-      dayActivities.forEach((activity) => {
-        if (activity.activityId === "unknown") return; // Skip unknown activity
-        const duration =
-          ((activity.endTime || Date.now()) - activity.startTime) / 1000 / 60;
-        durations[activity.activityId] =
-          (durations[activity.activityId] || 0) + duration;
-      });
-
-      // Calculate total elapsed minutes for today
-      const startOfDay = new Date(currentDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const elapsedMinutes = (Date.now() - startOfDay.getTime()) / 1000 / 60;
-
-      // Calculate total tracked minutes
-      const totalTrackedMinutes = Object.values(durations).reduce(
-        (sum, duration) => sum + duration,
-        0
-      );
-
-      // Set unknown duration as the difference
-      durations["unknown"] = Math.max(0, elapsedMinutes - totalTrackedMinutes);
-
+      const { durations } = calculateDurations(dayActivities, currentDate);
       setActivityDurations(durations);
+      setIsLoading(false);
     }, 1000);
 
     return () => clearInterval(interval);
   }, [currentDate]);
 
   const handlers = useSwipeable({
-    onSwipedLeft: () => {
+    onSwipedRight: () => {
       if (view === "main") {
         setView("history");
       } else {
@@ -97,8 +78,10 @@ export default function TimeTracker() {
         );
       }
     },
-    onSwipedRight: () => {
-      if (
+    onSwipedLeft: () => {
+      if (view === "main") {
+        navigate("/edit");
+      } else if (
         view === "history" &&
         getDateKey(currentDate) === getDateKey(new Date())
       ) {
@@ -132,9 +115,11 @@ export default function TimeTracker() {
 
   if (showCreateActivity) {
     return (
-      <CreateActivity
-        onSave={handleCreateActivity}
+      <CreateActivityForm
+        initialValues={undefined}
+        onSubmit={handleCreateActivity}
         onCancel={() => setShowCreateActivity(false)}
+        submitLabel="Create"
       />
     );
   }
@@ -145,17 +130,25 @@ export default function TimeTracker() {
 
   if (view === "history") {
     return (
-      <div {...handlers}>
+      <div {...handlers} className="h-screen p-4">
         <HistoryView activities={activities} date={currentDate} />
       </div>
     );
   }
 
   return (
-    <div {...handlers} className="p-4 max-w-md mx-auto">
+    <div {...handlers} className="h-screen p-4 max-w-md mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div className="text-2xl font-mono">
-          {formatTime(activityDurations[activeActivityId] || 0)}
+          {isLoading ? (
+            <div className="flex space-x-1 animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-12"></div>
+              <div className="h-8 bg-gray-200 rounded w-12"></div>
+              <div className="h-8 bg-gray-200 rounded w-12"></div>
+            </div>
+          ) : (
+            formatTime(activityDurations[activeActivityId] || 0)
+          )}
         </div>
         <Button size="icon" onClick={() => setShowCreateActivity(true)}>
           <Plus className="h-4 w-4" />

@@ -51,3 +51,32 @@ export function formatTime(minutes: number): string {
 export function getDateKey(date: Date = new Date()): string {
   return date.toISOString().split("T")[0];
 }
+
+export function getActivity(id: string): Activity | undefined {
+  const activities = getStoredActivities();
+  return activities.find((a) => a.id === id);
+}
+
+export function updateActivity(id: string, updatedActivity: Activity) {
+  const activities = getStoredActivities();
+  const index = activities.findIndex((a) => a.id === id);
+
+  if (index !== -1) {
+    activities[index] = { ...updatedActivity, id };
+    localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(activities));
+  }
+}
+
+export function deleteActivity(id: string) {
+  // Remove from activities list
+  const activities = getStoredActivities();
+  const filteredActivities = activities.filter((a) => a.id !== id);
+  localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(filteredActivities));
+
+  // Remove from activity times
+  const times = getActivityTimes();
+  Object.keys(times).forEach((date) => {
+    times[date] = times[date].filter((time) => time.activityId !== id);
+  });
+  localStorage.setItem(ACTIVITY_TIMES_KEY, JSON.stringify(times));
+}

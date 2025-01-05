@@ -1,12 +1,5 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { Activity } from "~/types/activity";
+import { Activity, ActivityTime } from "~/types/activity";
 import { getActivityTimes, getDateKey } from "~/utils/storage";
-import { ActivityTime } from "~/types/activity";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 export function calculateProgress(activity: Activity): number {
   if (!activity.timeGoal) return 0;

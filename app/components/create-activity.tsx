@@ -9,23 +9,32 @@ import { Slider } from "~/components/ui/slider";
 import { Activity, GoalType } from "~/types/activity";
 import { v4 as uuidv4 } from "uuid";
 
-interface CreateActivityProps {
-  onSave: (activity: Activity) => void;
+interface CreateActivityFormProps {
+  initialValues?: Activity;
+  onSubmit: (activity: Activity) => void;
   onCancel: () => void;
+  submitLabel?: string;
 }
 
-export function CreateActivity({ onSave, onCancel }: CreateActivityProps) {
-  const [label, setLabel] = useState("");
-  const [timeGoal, setTimeGoal] = useState<number | undefined>(undefined);
-  const [goalType, setGoalType] = useState<GoalType>("neutral");
+export function CreateActivityForm({
+  initialValues,
+  onSubmit,
+  onCancel,
+  submitLabel = "Create",
+}: CreateActivityFormProps) {
+  const [formData, setFormData] = useState<Omit<Activity, "id">>({
+    label: initialValues?.label || "",
+    timeGoal: initialValues?.timeGoal ? initialValues.timeGoal / 60 : undefined,
+    goalType: initialValues?.goalType || "neutral",
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
+    onSubmit({
       id: uuidv4(),
-      label,
-      timeGoal: timeGoal ? timeGoal * 60 : undefined, // Convert hours to minutes
-      goalType: timeGoal ? goalType : undefined,
+      label: formData.label,
+      timeGoal: formData.timeGoal ? formData.timeGoal * 60 : undefined,
+      goalType: formData.timeGoal ? formData.goalType : undefined,
     });
   };
 
@@ -35,8 +44,8 @@ export function CreateActivity({ onSave, onCancel }: CreateActivityProps) {
         <Label htmlFor="label">Activity Name (Required)</Label>
         <Input
           id="label"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
+          value={formData.label}
+          onChange={(e) => setFormData({ ...formData, label: e.target.value })}
           required
         />
       </div>
@@ -47,20 +56,26 @@ export function CreateActivity({ onSave, onCancel }: CreateActivityProps) {
           min={0}
           max={24}
           step={0.25}
-          value={[timeGoal || 0]}
-          onValueChange={(value) => setTimeGoal(value[0] || undefined)}
+          value={[formData.timeGoal ?? 0]}
+          onValueChange={(value) =>
+            setFormData({ ...formData, timeGoal: value[0] || undefined })
+          }
         />
         <div className="text-sm text-muted-foreground">
-          {timeGoal ? `${timeGoal} hours per day` : "No time goal set"}
+          {formData.timeGoal !== undefined
+            ? `${formData.timeGoal} hours per day`
+            : "No time goal set"}
         </div>
       </div>
 
-      {timeGoal && (
+      {formData.timeGoal && (
         <div className="space-y-2">
           <Label>Goal Type</Label>
           <RadioGroup
-            value={goalType}
-            onValueChange={(value: GoalType) => setGoalType(value)}
+            value={formData.goalType}
+            onValueChange={(value: GoalType) =>
+              setFormData({ ...formData, goalType: value })
+            }
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="more" id="more" />
@@ -82,8 +97,8 @@ export function CreateActivity({ onSave, onCancel }: CreateActivityProps) {
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={!label}>
-          Create
+        <Button type="submit" className="" disabled={!formData.label}>
+          {submitLabel}
         </Button>
       </div>
     </form>
